@@ -1,9 +1,8 @@
 #include <stdlib.h>
 #include <unistd.h>
-#include <iostream.h>
+#include <iostream>
 
 #include "server_http.hpp"
-#include "client_http.hpp"
 
 //Added for the default_resource example
 #include <fstream>
@@ -11,43 +10,8 @@
 
 using namespace std;
 //Added for the json-example:
-using namespace boost::property_tree;
 
 typedef SimpleWeb::Server<SimpleWeb::HTTP> HttpServer;
-
-int main(int argc, char **argv)
-{
-	char* ip;
-	char* dir;
-	int	  port;
-
-	int rez = 0;
-
-	while ((rez = getopt(argc, argv, "h:p:d:")) != -1) {
-		switch(rez)
-		{
-			case 'h':
-				ip = optarg;
-				break;
-			case 'p':
-				port = atoi(optarg);
-				break;
-			case 'd':
-				dir = optarg;
-				break;
-		}
-	}
-
-	if (fork() == 0)
-	{
-		setsid();
-		close(STDIN_FILENO);
-		close(STDOUT_FILENO);
-		close(STDERR_FILENO);
-		StartServer(ip, port, dir);
-	}
-	return 0;
-}
 
 void StartServer(char *ip, int port, char *webDir)
 {
@@ -93,7 +57,7 @@ void StartServer(char *ip, int port, char *webDir)
     //Will respond with content in the web/-directory, and its subdirectories.
     //Default file: index.html
     //Can for instance be used to retrieve an HTML 5 client that uses REST-resources on this server
-    server.default_resource["GET"]=[](HttpServer::Response& response, shared_ptr<HttpServer::Request> request) {
+    server.default_resource["GET"]=[&webDir](HttpServer::Response& response, shared_ptr<HttpServer::Request> request) {
         boost::filesystem::path web_root_path(webDir);
         if(!boost::filesystem::exists(web_root_path))
             cerr << "Could not find web root." << endl;
@@ -144,4 +108,38 @@ void StartServer(char *ip, int port, char *webDir)
     
     //Start server
     server.start();
+}
+
+int main(int argc, char **argv)
+{
+	char* ip;
+	char* dir;
+	int	  port;
+
+	int rez = 0;
+
+	while ((rez = getopt(argc, argv, "h:p:d:")) != -1) {
+		switch(rez)
+		{
+			case 'h':
+				ip = optarg;
+				break;
+			case 'p':
+				port = atoi(optarg);
+				break;
+			case 'd':
+				dir = optarg;
+				break;
+		}
+	}
+
+	if (fork() == 0)
+	{
+		setsid();
+		close(STDIN_FILENO);
+		close(STDOUT_FILENO);
+		close(STDERR_FILENO);
+		StartServer(ip, port, dir);
+	}
+	return 0;
 }
